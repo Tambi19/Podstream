@@ -33,6 +33,7 @@ app.use(
       "http://localhost:5173",
       process.env.FRONTEND_URL
     ],
+    methods: ["GET", "POST"],
     credentials: true
   })
 );

@@ -55,6 +55,7 @@ const role = location.state?.role || null;
 const [participants, setParticipants] = useState([]);
 const [remoteUserName, setRemoteUserName] = useState(null);
 const [showInviteModal, setShowInviteModal] = useState(false);
+const API = import.meta.env.VITE_API_URL;
 
 
 
@@ -114,7 +115,9 @@ const senderName = user?.name || "User";
 
   /* 🔌 Init socket once */
   useEffect(() => {
-  socketRef.current = io("http://localhost:5000");
+socketRef.current = io(API, {
+  transports: ["websocket"],
+});
 
   socketRef.current.on("receive-message", (data) => {
     setMessages((prev) => [...prev, data]);
@@ -180,7 +183,7 @@ const senderName = user?.name || "User";
       const loadChatHistory = async () => {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`http://localhost:5000/api/chats/${roomId}`, {
+  const res = await fetch(`${API}/api/chats/${roomId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -195,6 +198,9 @@ const senderName = user?.name || "User";
   roomId,
   userName: senderName,
 });
+
+await loadChatHistory();
+
 
 
      socketRef.current.on("user-joined", async (data) => {
@@ -516,7 +522,7 @@ const styles = `
       formData.append("roomId", roomId);
       formData.append("title", title || "Untitled Recording");
 
-      const res = await fetch("http://localhost:5000/api/recordings/upload", {
+      const res = await fetch(`${API}/api/recordings/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -546,7 +552,7 @@ const styles = `
 
   const token = localStorage.getItem("token");
 
-  await fetch("http://localhost:5000/api/chats", {
+  await fetch(`${API}/api/chats`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

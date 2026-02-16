@@ -36,7 +36,8 @@ router.post("/upload", protect, upload.single("recording"), async (req, res) => 
       roomId,
       title: title || "Untitled Recording", // ✅ NOW SAFE
       filename: req.file.filename,
-      fileUrl: `http://localhost:5000/uploads/${req.file.filename}`,
+      fileUrl: `${process.env.BASE_URL}/uploads/${req.file.filename}`,
+
     });
 
     res.json({ msg: "Uploaded ✅", recording: newRecording });

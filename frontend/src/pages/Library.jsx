@@ -29,6 +29,8 @@ const [page, setPage] = useState(1);
 const [modalOpen, setModalOpen] = useState(false);
 const [modalData, setModalData] = useState(null);
 const [modalType, setModalType] = useState(null); 
+const API = import.meta.env.VITE_API_URL;
+
 // "transcript" or "summary"
 
 
@@ -41,7 +43,7 @@ const PER_PAGE = 5;
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get("http://localhost:5000/api/recordings", {
+      const res = await axios.get(`${API}/api/recordings`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -64,7 +66,7 @@ const PER_PAGE = 5;
     try {
       const token = localStorage.getItem("token");
 
-      await axios.delete(`http://localhost:5000/api/recordings/${id}`, {
+      await axios.delete(`${API}/api/recordings/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -83,7 +85,7 @@ const PER_PAGE = 5;
       const token = localStorage.getItem("token");
 
       await axios.post(
-        `http://localhost:5000/api/recordings/${id}/transcribe`,
+        `${API}/api/recordings/${id}/transcribe`,
         {},
         {
           headers: {
@@ -105,7 +107,7 @@ const PER_PAGE = 5;
     const token = localStorage.getItem("token");
 
     await axios.put(
-      `http://localhost:5000/api/recordings/${id}/title`,
+      `${API}/api/recordings/${id}/title`,
       { title: newTitle },
       {
         headers: {
@@ -222,7 +224,7 @@ const downloadMP4 = async (id) => {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch(`http://localhost:5000/api/recordings/${id}/mp4`, {
+    const res = await fetch(`${API}/api/recordings/${id}/mp4`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -277,7 +279,7 @@ const generateSummary = async (id) => {
   const token = localStorage.getItem("token");
 
   const res = await fetch(
-    `http://localhost:5000/api/ai/summary/${id}`,
+    `${API}/api/ai/summary/${id}`,
     {
       method: "POST",
       headers: {
@@ -431,7 +433,7 @@ const generateSummary = async (id) => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://localhost:5000/api/recordings/${rec._id}/transcribe`,
+        `${API}/api/recordings/${rec._id}/transcribe`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -474,7 +476,7 @@ const generateSummary = async (id) => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://localhost:5000/api/ai/summary/${rec._id}`,
+        `${API}/api/ai/summary/${rec._id}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

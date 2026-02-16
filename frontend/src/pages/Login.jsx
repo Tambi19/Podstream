@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const API = import.meta.env.VITE_API_URL;
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,7 +16,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await axios.post(`${API}/api/auth/login`, {
         email,
         password,
       });
