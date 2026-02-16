@@ -196,6 +196,28 @@ const downloadTranscriptPDF = (title, transcript) => {
   doc.save(`${safeTitle}.pdf`);
 };
 
+const downloadModalPDF = () => {
+  if (!modalData?.content) return;
+
+  const doc = new jsPDF();
+
+  const safeTitle = (modalData.title || "Transcript").replace(
+    /[^a-z0-9]/gi,
+    "_"
+  );
+
+  doc.setFontSize(16);
+  doc.text(modalData.title || "Transcript", 10, 15);
+
+  doc.setFontSize(12);
+
+  const lines = doc.splitTextToSize(modalData.content, 180);
+  doc.text(lines, 10, 30);
+
+  doc.save(`${safeTitle}.pdf`);
+};
+
+
 const downloadMP4 = async (id) => {
   try {
     const token = localStorage.getItem("token");
@@ -542,9 +564,38 @@ const generateSummary = async (id) => {
         ✕
       </button>
 
-      <h3 style={{ marginBottom: "20px" }}>
-        {modalData.title}
-      </h3>
+      <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "20px",
+  }}
+>
+  <h3 style={{ margin: 0 }}>
+    {modalData.title}
+  </h3>
+
+  {modalType === "transcript" && (
+    <button
+      onClick={downloadModalPDF}
+      style={{
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        color: "#9e63fd",
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        fontSize: "10px",
+        paddingRight: "20px",
+      }}
+    >
+      <Download size={18} />
+      PDF
+    </button>
+  )}
+</div>
 
       <p style={{ lineHeight: "1.7", color: "#A1A1AA" }}>
         {modalData.content}
