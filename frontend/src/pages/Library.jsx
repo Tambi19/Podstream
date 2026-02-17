@@ -85,7 +85,7 @@ const PER_PAGE = 5;
       const token = localStorage.getItem("token");
 
       await axios.post(
-        `${API}/api/recordings/${id}/transcribe`,
+        `${API}/api/ai/transcribe/${id}`,
         {},
         {
           headers: {
@@ -220,37 +220,27 @@ const downloadModalPDF = () => {
 };
 
 
-const downloadMP4 = async (id) => {
+const downloadMP4 = (rec) => {
   try {
-    const token = localStorage.getItem("token");
-
-    const res = await fetch(`${API}/api/recordings/${id}/mp4`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!res.ok) {
-      const data = await res.json();
-      alert(data.msg || "Download failed ❌");
-      return;
-    }
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
+    // Force download from Cloudinary
+    const downloadUrl = rec.fileUrl.replace(
+      "/upload/",
+      "/upload/fl_attachment/"
+    );
 
     const a = document.createElement("a");
-    a.href = url;
-    a.download = "recording.mp4";
+    a.href = downloadUrl;
+    a.download = `${rec.title || "recording"}.mp4`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
 
-    window.URL.revokeObjectURL(url);
   } catch (err) {
     console.log(err);
-    alert("MP4 download failed ❌");
+    alert("Download failed ❌");
   }
 };
+
 
 const btn = {
   padding: "8px 16px",
@@ -512,10 +502,11 @@ const generateSummary = async (id) => {
   Delete
         </button>
 
-        <button style={btn} onClick={() => downloadMP4(rec._id)}>
-          <Download size={16} style={{ marginRight: "6px" }} />
+       <button onClick={() => downloadMP4(rec)} style={btn}>
+  <Download size={16} style={{ marginRight: "6px" }} />
   MP4
-        </button>
+</button>
+
       </div>
 
       {/* Transcript */}
