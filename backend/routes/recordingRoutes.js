@@ -3,8 +3,9 @@ import multer from "multer";
 import cloudinary from "../config/cloudinary.js";
 import Recording from "../models/recording.js";
 import { protect } from "../middleware/authMiddleware.js";
-import pkg from "multer-storage-cloudinary";
-const { CloudinaryStorage } = pkg;
+import multerStorageCloudinary from "multer-storage-cloudinary";
+
+const { CloudinaryStorage } = multerStorageCloudinary;
 
 
 const router = express.Router();
