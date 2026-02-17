@@ -140,38 +140,38 @@ const senderName = user?.name || "User";
   setRemoteUserName(data.userName);
   setStatus("Connecting...");
 
-  if (!pcRef.current) return;
-
-  // ONLY HOST CREATES OFFER
-  if (role === "host") {
+  if (role === "host" && pcRef.current) {
     const offer = await pcRef.current.createOffer();
     await pcRef.current.setLocalDescription(offer);
+
     socket.emit("offer", { roomId, offer });
   }
 });
 
-
   // ✅ OFFER
-  socket.on("offer", async (offer) => {
-    if (!pcRef.current) return;
-    if (pcRef.current.signalingState !== "stable") return;
+  socket.on("offer", async ({ offer }) => {
+  if (!pcRef.current) return;
 
+  await pcRef.current.setRemoteDescription(
+    new RTCSessionDescription(offer)
+  );
 
-    await pcRef.current.setRemoteDescription(offer);
+  const answer = await pcRef.current.createAnswer();
+  await pcRef.current.setLocalDescription(answer);
 
-    const answer = await pcRef.current.createAnswer();
-    await pcRef.current.setLocalDescription(answer);
-
-    socket.emit("answer", { roomId, answer });
-  });
+  socket.emit("answer", { roomId, answer });
+});
 
   // ✅ ANSWER
-  socket.on("answer", async (answer) => {
-    if (!pcRef.current) return;
+  socket.on("answer", async ({ answer }) => {
+  if (!pcRef.current) return;
 
-    await pcRef.current.setRemoteDescription(answer);
-    setStatus("Connected ✅");
-  });
+  await pcRef.current.setRemoteDescription(
+    new RTCSessionDescription(answer)
+  );
+
+  setStatus("Connected ✅");
+});
 
   // ✅ ICE
   socket.on("ice-candidate", async (candidate) => {

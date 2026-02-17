@@ -41,6 +41,11 @@ export const createPeerConnection = async (
   }
 };
 
+pc.onconnectionstatechange = () => {
+  console.log("Connection State:", pc.connectionState);
+};
+
+
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
