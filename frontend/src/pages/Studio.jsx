@@ -230,12 +230,13 @@ await loadChatHistory();
         
 
 
-        pcRef.current = createPeerConnection(
-          socketRef.current,
-          roomId,
-          stream,
-          remoteVideoRef
-        );
+       pcRef.current = await createPeerConnection(
+    socketRef.current,
+    roomId,
+    stream,
+    remoteVideoRef,
+    API
+  );
 
         await pcRef.current.setRemoteDescription(offer);
         const answer = await pcRef.current.createAnswer();
