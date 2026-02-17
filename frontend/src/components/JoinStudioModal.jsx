@@ -12,10 +12,9 @@ const JoinStudioModal = ({ onClose }) => {
   const createRoom = () => {
   const newRoomId = Math.random().toString(36).substring(2, 8);
 
-  navigate(`/studio/${newRoomId}`, {
-    state: { role: "host" },
-  });
+  navigate(`/studio/${newRoomId}?role=host`);
 };
+
 
 
   const joinRoom = () => {
@@ -27,10 +26,9 @@ const JoinStudioModal = ({ onClose }) => {
     roomId = roomInput.split("/studio/")[1];
   }
 
-  navigate(`/studio/${roomId}`, {
-    state: { role: "guest" },
-  });
+  navigate(`/studio/${roomId}?role=guest`);
 };
+
 
 
   return (
