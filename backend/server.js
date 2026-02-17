@@ -8,6 +8,8 @@ import authRoutes from "./routes/authRoutes.js";
 import recordingRoutes from "./routes/recordingRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import twilio from "twilio";
+
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -61,6 +63,17 @@ app.use("/api/auth", authRoutes);
 app.use("/api/recordings", recordingRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/ai", aiRoutes);
+
+app.get("/api/ice", async (req, res) => {
+  const client = twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  );
+
+  const token = await client.tokens.create();
+  res.json(token);
+});
+
 
 
 

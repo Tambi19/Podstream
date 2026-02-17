@@ -209,11 +209,12 @@ await loadChatHistory();
   // 🔹 Start WebRTC
   setStatus("Participant joined ✅ Connecting...");
 
-  pcRef.current = createPeerConnection(
+  pcRef.current = await createPeerConnection(
     socketRef.current,
     roomId,
     stream,
-    remoteVideoRef
+    remoteVideoRef,
+    API
   );
 
   const offer = await pcRef.current.createOffer();
@@ -247,11 +248,12 @@ await loadChatHistory();
         await pcRef.current.setRemoteDescription(answer);
       });
 
-      socketRef.current.on("ice-candidate", async (candidate) => {
-        if (pcRef.current) {
-          await pcRef.current.addIceCandidate(candidate);
-        }
-      });
+     socketRef.current.on("ice-candidate", async (candidate) => {
+  if (pcRef.current) {
+    await pcRef.current.addIceCandidate(candidate);
+  }
+});
+
     } catch (err) {
       console.error(err);
       alert("Please allow camera & mic access");
