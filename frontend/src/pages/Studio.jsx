@@ -130,16 +130,25 @@ const senderName = user?.name || "User";
   });
 
   socket.on("user-joined", async (data) => {
-    setRemoteUserName(data.userName);
-    setStatus("Connecting...");
+  setRemoteUserName(data.userName);
+  setStatus("Connecting...");
 
-    if (role === "host" && pcRef.current) {
-      console.log("HOST creating offer...");
+  console.log("User joined:", data.userName);
+
+  // Only host creates offer
+  if (role === "host" && pcRef.current) {
+    try {
       const offer = await pcRef.current.createOffer();
       await pcRef.current.setLocalDescription(offer);
+
       socket.emit("offer", { roomId, offer });
+      console.log("Offer sent");
+    } catch (err) {
+      console.error("Offer error:", err);
     }
-  });
+  }
+});
+
 
   socket.on("offer", async ({ offer }) => {
     if (!pcRef.current) return;
