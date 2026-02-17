@@ -17,7 +17,10 @@ const recordingSchema = new mongoose.Schema(
     filename: { type: String, required: true },
     fileUrl: { type: String, required: true },
     transcript: { type: String, default: "" },
-    
+    publicId: {
+  type: String,
+},
+
   },
   { timestamps: true }
 );
