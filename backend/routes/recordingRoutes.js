@@ -1,9 +1,11 @@
 import express from "express";
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 import Recording from "../models/recording.js";
 import { protect } from "../middleware/authMiddleware.js";
+import pkg from "multer-storage-cloudinary";
+const { CloudinaryStorage } = pkg;
+
 
 const router = express.Router();
 
