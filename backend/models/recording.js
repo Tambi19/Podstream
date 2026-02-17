@@ -14,7 +14,6 @@ const recordingSchema = new mongoose.Schema(
     roomId: { type: String, required: true },
     title: { type: String, default: "Untitled Recording" },
 
-    filename: { type: String, required: true },
     fileUrl: { type: String, required: true },
     transcript: { type: String, default: "" },
     publicId: {
