@@ -18,6 +18,8 @@ const upload = multer({ storage });
 router.post("/upload", protect, upload.single("recording"), async (req, res) => {
   try {
     const { roomId, title } = req.body;
+    console.log("FILE SIZE:", req.file?.size);
+
 
     if (!req.file) {
       return res.status(400).json({ msg: "No file uploaded" });
@@ -37,6 +39,7 @@ router.post("/upload", protect, upload.single("recording"), async (req, res) => 
           }
         );
 
+
         stream.end(req.file.buffer);
       });
 
@@ -55,8 +58,11 @@ router.post("/upload", protect, upload.single("recording"), async (req, res) => 
       recording: newRecording,
     });
   } catch (err) {
-    console.error("UPLOAD ERROR:", err);
-    res.status(500).json({ msg: "Upload failed" });
+  console.error("🔥 FULL UPLOAD ERROR:", err);
+  res.status(500).json({
+    msg: "Upload failed",
+    error: err.message,
+  });
   }
 });
 
