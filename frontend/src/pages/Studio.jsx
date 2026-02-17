@@ -246,7 +246,7 @@ const senderName = user?.name || "User";
   if (role && roomId) {
     startStudio();
   }
-}, [roomId]);
+}, [roomId,role]);
 
 useEffect(() => {
   if (role) {
