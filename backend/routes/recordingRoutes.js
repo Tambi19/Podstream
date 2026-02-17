@@ -14,11 +14,13 @@ const router = express.Router();
 ========================================= */
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
+  params: async (req, file) => ({
     folder: "podstream-recordings",
     resource_type: "video",
-  },
+    public_id: Date.now() + "-" + file.originalname,
+  }),
 });
+
 
 const upload = multer({ storage });
 
