@@ -115,9 +115,8 @@ const senderName = user?.name || "User";
 
   /* 🔌 Init socket once */
   useEffect(() => {
-socketRef.current = io(API, {
-  transports: ["websocket"],
-});
+socketRef.current = io(API);
+
 
   socketRef.current.on("receive-message", (data) => {
     setMessages((prev) => [...prev, data]);
@@ -131,11 +130,7 @@ socketRef.current = io(API, {
     setTypingUser(null);
   });
 
-  socketRef.current.on("user-joined", (data) => {
-    console.log("Remote joined:", data);
-    setRemoteUserName(data.userName);
-    setStatus("Participant joined ✅ Connecting...");
-  });
+  
 
   return () => {
     if (socketRef.current) {
