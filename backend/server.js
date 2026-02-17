@@ -26,34 +26,21 @@ const __dirname = path.dirname(__filename);
 
 
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://podstream-i4wocu8n3-tambis-projects.vercel.app",
-  "https://podstream-seven.vercel.app"
-];
+
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: true,
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
+
 
 
 app.use(express.json());
