@@ -3,30 +3,17 @@ import multer from "multer";
 import cloudinary from "../config/cloudinary.js";
 import Recording from "../models/recording.js";
 import { protect } from "../middleware/authMiddleware.js";
-import multerStorageCloudinary from "multer-storage-cloudinary";
-
-const { CloudinaryStorage } = multerStorageCloudinary;
-
 
 const router = express.Router();
 
 /* =========================================
-   ✅ Cloudinary Storage Setup
+   ✅ Use Memory Storage (NO DISK)
 ========================================= */
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => ({
-    folder: "podstream-recordings",
-    resource_type: "video",
-    public_id: Date.now() + "-" + file.originalname,
-  }),
-});
-
-
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 /* =========================================
-   ✅ Upload Recording (Cloudinary)
+   ✅ Upload Recording (Cloudinary Stream)
 ========================================= */
 router.post("/upload", protect, upload.single("recording"), async (req, res) => {
   try {
@@ -36,12 +23,31 @@ router.post("/upload", protect, upload.single("recording"), async (req, res) => 
       return res.status(400).json({ msg: "No file uploaded" });
     }
 
+    const streamUpload = () =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "podstream-recordings",
+            resource_type: "video",
+            public_id: Date.now() + "-" + req.file.originalname,
+          },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
+
+        stream.end(req.file.buffer);
+      });
+
+    const result = await streamUpload();
+
     const newRecording = await Recording.create({
       userId: req.user._id,
       roomId,
       title: title || "Untitled Recording",
-      fileUrl: req.file.path, // ✅ Cloudinary secure URL
-      publicId: req.file.filename, // store for deletion later
+      fileUrl: result.secure_url,
+      publicId: result.public_id,
     });
 
     res.json({
@@ -70,7 +76,7 @@ router.get("/", protect, async (req, res) => {
 });
 
 /* =========================================
-   ✅ Delete Recording (Also Remove From Cloudinary)
+   ✅ Delete Recording
 ========================================= */
 router.delete("/:id", protect, async (req, res) => {
   try {
@@ -83,7 +89,6 @@ router.delete("/:id", protect, async (req, res) => {
       return res.status(404).json({ msg: "Recording not found" });
     }
 
-    // 🔥 Delete from Cloudinary
     if (recording.publicId) {
       await cloudinary.uploader.destroy(recording.publicId, {
         resource_type: "video",
