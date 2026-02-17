@@ -115,7 +115,11 @@ const senderName = user?.name || "User";
 
   /* 🔌 Init socket once */
   useEffect(() => {
-socketRef.current = io(API);
+socketRef.current = io(API, {
+  transports: ["websocket"],
+  withCredentials: true,
+});
+
 
 
   socketRef.current.on("receive-message", (data) => {
