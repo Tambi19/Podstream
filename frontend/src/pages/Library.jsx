@@ -60,7 +60,7 @@ const PER_PAGE = 5;
 
   useEffect(() => {
     fetchRecordings();
-  }, []);
+  }, [API]);
 
   const handleDelete = async (id) => {
     try {
@@ -199,7 +199,11 @@ const downloadTranscriptPDF = (title, transcript) => {
 };
 
 const downloadModalPDF = () => {
-  if (!modalData?.content) return;
+  if (!modalData?.content || modalData.content.trim() === "") {
+  alert("No content to export ❌");
+  return;
+}
+
 
   const doc = new jsPDF();
 
@@ -222,7 +226,11 @@ const downloadModalPDF = () => {
 
 const downloadMP4 = (rec) => {
   try {
-    // Force download from Cloudinary
+    if (!rec?.fileUrl) {
+      alert("Video URL missing ❌");
+      return;
+    }
+
     const downloadUrl = rec.fileUrl.replace(
       "/upload/",
       "/upload/fl_attachment/"
@@ -240,6 +248,7 @@ const downloadMP4 = (rec) => {
     alert("Download failed ❌");
   }
 };
+
 
 
 const btn = {
@@ -423,7 +432,7 @@ const generateSummary = async (id) => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `${API}/api/recordings/${rec._id}/transcribe`,
+        `${API}/api/ai/transcribe/${rec._id}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -431,12 +440,14 @@ const generateSummary = async (id) => {
       );
 
       const data = await res.json();
+if (res.ok) {
+  fetchRecordings(); // <-- add this
 
-      if (res.ok) {
-        setModalData({
-          title: rec.title || "Transcript",
-          content: data.transcript,
-        });
+  setModalData({
+    title: rec.title || "Transcript",
+    content: data.transcript,
+  });
+
 
         setModalType("transcript");
         setModalOpen(true);   // ✅ IMPORTANT
