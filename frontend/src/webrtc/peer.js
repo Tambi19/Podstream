@@ -29,10 +29,18 @@ export const createPeerConnection = async (
     pc.addTrack(track, localStream)
   );
 
-  pc.ontrack = (event) => {
-    console.log("Remote stream received!");
+ pc.ontrack = (event) => {
+  console.log("Remote stream received!");
+
+  if (remoteVideoRef.current) {
     remoteVideoRef.current.srcObject = event.streams[0];
-  };
+
+    remoteVideoRef.current.play().catch((err) => {
+      console.log("Autoplay prevented:", err);
+    });
+  }
+};
+
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {

@@ -115,36 +115,80 @@ const senderName = user?.name || "User";
 
   /* 🔌 Init socket once */
   useEffect(() => {
-socketRef.current = io(API, {
-  transports: ["websocket"],
-  withCredentials: true,
-});
+  socketRef.current = io(API, {
+    transports: ["websocket"],
+    withCredentials: true,
+  });
 
+  const socket = socketRef.current;
 
-
-  socketRef.current.on("receive-message", (data) => {
+  // ✅ CHAT
+  socket.on("receive-message", (data) => {
     setMessages((prev) => [...prev, data]);
   });
 
-  socketRef.current.on("user-typing", (sender) => {
+  socket.on("user-typing", (sender) => {
     setTypingUser(sender);
   });
 
-  socketRef.current.on("user-stop-typing", () => {
+  socket.on("user-stop-typing", () => {
     setTypingUser(null);
   });
 
-  
+  // ✅ USER JOINED
+  socket.on("user-joined", async (data) => {
+  setRemoteUserName(data.userName);
+  setStatus("Connecting...");
+
+  if (!pcRef.current) return;
+
+  // ONLY HOST CREATES OFFER
+  if (role === "host") {
+    const offer = await pcRef.current.createOffer();
+    await pcRef.current.setLocalDescription(offer);
+    socket.emit("offer", { roomId, offer });
+  }
+});
+
+
+  // ✅ OFFER
+  socket.on("offer", async (offer) => {
+    if (!pcRef.current) return;
+    if (pcRef.current.signalingState !== "stable") return;
+
+
+    await pcRef.current.setRemoteDescription(offer);
+
+    const answer = await pcRef.current.createAnswer();
+    await pcRef.current.setLocalDescription(answer);
+
+    socket.emit("answer", { roomId, answer });
+  });
+
+  // ✅ ANSWER
+  socket.on("answer", async (answer) => {
+    if (!pcRef.current) return;
+
+    await pcRef.current.setRemoteDescription(answer);
+    setStatus("Connected ✅");
+  });
+
+  // ✅ ICE
+  socket.on("ice-candidate", async (candidate) => {
+    if (pcRef.current && candidate) {
+      try {
+        await pcRef.current.addIceCandidate(candidate);
+      } catch (err) {
+        console.error("ICE error:", err);
+      }
+    }
+  });
 
   return () => {
-    if (socketRef.current) {
-      socketRef.current.off("receive-message");
-      socketRef.current.off("user-typing");
-      socketRef.current.off("user-stop-typing");
-      socketRef.current.disconnect();
-    }
+    socket.disconnect();
   };
 }, []);
+
 
  
   /* ✅ Recording Timer */
@@ -162,104 +206,41 @@ socketRef.current = io(API, {
 
   /* 🎥 Join Studio */
   const startStudio = async () => {
-    if (!roomId) {
-      alert("Room ID missing");
-      return;
-    }
+  if (!roomId) return alert("Room ID missing");
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
 
-      localVideoRef.current.srcObject = stream;
-      streamRef.current = stream;
+    localVideoRef.current.srcObject = stream;
+    streamRef.current = stream;
 
-      setJoined(true);
-      setStatus("Waiting for participant...");
+    // ✅ Create peer connection immediately
+    pcRef.current = await createPeerConnection(
+      socketRef.current,
+      roomId,
+      stream,
+      remoteVideoRef,
+      API
+    );
 
-      const loadChatHistory = async () => {
-  const token = localStorage.getItem("token");
+    
 
-  const res = await fetch(`${API}/api/chats/${roomId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+    setJoined(true);
+    setStatus("Waiting for participant...");
 
-  const data = await res.json();
-  setMessages(data);
-};
+    socketRef.current.emit("join-room", {
+      roomId,
+      userName: senderName,
+    });
 
-
-      socketRef.current.emit("join-room", {
-  roomId,
-  userName: senderName,
-});
-
-await loadChatHistory();
-
-
-
-     socketRef.current.on("user-joined", async (data) => {
-  // 🔹 Set username
-  setRemoteUserName(data.userName);
-
-  // 🔹 Start WebRTC
-  setStatus("Participant joined ✅ Connecting...");
-
-  pcRef.current = await createPeerConnection(
-    socketRef.current,
-    roomId,
-    stream,
-    remoteVideoRef,
-    API
-  );
-
-  const offer = await pcRef.current.createOffer();
-  await pcRef.current.setLocalDescription(offer);
-
-  socketRef.current.emit("offer", { roomId, offer });
-});
-
-
-      socketRef.current.on("offer", async (offer) => {
-        setStatus("Connecting... 🔄");
-
-        
-
-
-       pcRef.current = await createPeerConnection(
-    socketRef.current,
-    roomId,
-    stream,
-    remoteVideoRef,
-    API
-  );
-
-        await pcRef.current.setRemoteDescription(offer);
-        const answer = await pcRef.current.createAnswer();
-        await pcRef.current.setLocalDescription(answer);
-        socketRef.current.emit("answer", { roomId, answer });
-      });
-
-      socketRef.current.on("answer", async (answer) => {
-        setStatus("Connected ✅");
-        await pcRef.current.setRemoteDescription(answer);
-      });
-
-     socketRef.current.on("ice-candidate", async (candidate) => {
-  if (pcRef.current) {
-    await pcRef.current.addIceCandidate(candidate);
+  } catch (err) {
+    console.error(err);
+    alert("Please allow camera & mic access");
   }
-});
-
-    } catch (err) {
-      console.error(err);
-      alert("Please allow camera & mic access");
-    }
-  };
+};
 
   useEffect(() => {
   if (role && roomId) {
