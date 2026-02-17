@@ -51,7 +51,8 @@ const Studio = () => {
   const remoteVideoRef = useRef(null);
   const recordedVideoRef = useRef(null);
   const location = useLocation();
-const role = location.state?.role || null;
+const params = new URLSearchParams(location.search);
+const role = params.get("role");
 const [participants, setParticipants] = useState([]);
 const [remoteUserName, setRemoteUserName] = useState(null);
 const [showInviteModal, setShowInviteModal] = useState(false);
@@ -115,79 +116,70 @@ const senderName = user?.name || "User";
 
   /* 🔌 Init socket once */
   useEffect(() => {
-  socketRef.current = io(API, {
+  if (!role) return;   // 🔥 VERY IMPORTANT
+
+  const socket = io(API, {
     transports: ["websocket"],
     withCredentials: true,
   });
 
-  const socket = socketRef.current;
+  socketRef.current = socket;
 
-  // ✅ CHAT
   socket.on("receive-message", (data) => {
     setMessages((prev) => [...prev, data]);
   });
 
-  socket.on("user-typing", (sender) => {
-    setTypingUser(sender);
-  });
-
-  socket.on("user-stop-typing", () => {
-    setTypingUser(null);
-  });
-
-  // ✅ USER JOINED
   socket.on("user-joined", async (data) => {
-  setRemoteUserName(data.userName);
-  setStatus("Connecting...");
+    setRemoteUserName(data.userName);
+    setStatus("Connecting...");
 
-  if (role === "host" && pcRef.current) {
-    const offer = await pcRef.current.createOffer();
-    await pcRef.current.setLocalDescription(offer);
+    if (role === "host" && pcRef.current) {
+      console.log("HOST creating offer...");
+      const offer = await pcRef.current.createOffer();
+      await pcRef.current.setLocalDescription(offer);
+      socket.emit("offer", { roomId, offer });
+    }
+  });
 
-    socket.emit("offer", { roomId, offer });
-  }
-});
-
-  // ✅ OFFER
   socket.on("offer", async ({ offer }) => {
-  if (!pcRef.current) return;
+    if (!pcRef.current) return;
 
-  await pcRef.current.setRemoteDescription(
-    new RTCSessionDescription(offer)
-  );
+    console.log("Received offer");
 
-  const answer = await pcRef.current.createAnswer();
-  await pcRef.current.setLocalDescription(answer);
+    await pcRef.current.setRemoteDescription(
+      new RTCSessionDescription(offer)
+    );
 
-  socket.emit("answer", { roomId, answer });
-});
+    const answer = await pcRef.current.createAnswer();
+    await pcRef.current.setLocalDescription(answer);
 
-  // ✅ ANSWER
+    socket.emit("answer", { roomId, answer });
+  });
+
   socket.on("answer", async ({ answer }) => {
-  if (!pcRef.current) return;
+    if (!pcRef.current) return;
 
-  await pcRef.current.setRemoteDescription(
-    new RTCSessionDescription(answer)
-  );
+    console.log("Received answer");
 
-  setStatus("Connected ✅");
-});
+    await pcRef.current.setRemoteDescription(
+      new RTCSessionDescription(answer)
+    );
 
-  // ✅ ICE
+    setStatus("Connected ✅");
+  });
+
   socket.on("ice-candidate", async (candidate) => {
     if (pcRef.current && candidate) {
-      try {
-        await pcRef.current.addIceCandidate(candidate);
-      } catch (err) {
-        console.error("ICE error:", err);
-      }
+      await pcRef.current.addIceCandidate(candidate);
     }
   });
 
   return () => {
     socket.disconnect();
   };
-}, []);
+
+}, [role]);
+
 
 
  
@@ -246,7 +238,7 @@ const senderName = user?.name || "User";
   if (role && roomId) {
     startStudio();
   }
-}, [roomId,role]);
+}, [role, roomId]);
 
 useEffect(() => {
   if (role) {
